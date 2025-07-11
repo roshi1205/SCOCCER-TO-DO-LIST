@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unique To-Do Wizard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap');
+    
+    body {
+      margin: 0;
+      background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
+      font-family: 'Outfit', sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .todo-container {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+      width: 90%;
+      max-width: 420px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0ff;
+      letter-spacing: 1px;
+    }
+
+    .menu {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .menu-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: white;
+      border-bottom: 2px solid transparent;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+
+    .menu-btn.active {
+      border-bottom: 2px solid #0ff;
+    }
+
+    .input-box {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    #taskInput {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      outline: none;
+    }
+
+    #addTask {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 0 8px 8px 0;
+      background: #0ff;
+      color: black;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    #addTask:hover {
+      background: #00cccc;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    li {
+      background: rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+
+    li.completed {
+      text-decoration: line-through;
+      color: #999;
+      background: rgba(0, 255, 100, 0.1);
+    }
+
+    li.trashed {
+      color: #f55;
+      background: rgba(255, 50, 50, 0.1);
+    }
+
+    .task-btns button {
+      margin-left: 10px;
+      background: none;
+      border: none;
+      color: #0ff;
+      font-size: 1.1em;
+      cursor: pointer;
+    }
+
+    .task-btns button:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="todo-container">
+    <h1>✨ To-Do Wizard</h1>
+
+    <div class="menu">
+      <button class="menu-btn active" data-menu="all">All</button>
+      <button class="menu-btn" data-menu="active">Active</button>
+      <button class="menu-btn" data-menu="completed">Completed</button>
+      <button class="menu-btn" data-menu="trash">Trash</button>
+    </div>
+
+    <div class="input-box">
+      <input type="text" id="taskInput" placeholder="Create a new task...">
+      <button id="addTask">➕</button>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    let tasks = [];
+    let currentMenu = 'all';
+
+    const taskInput = document.getElementById("taskInput");
+    const taskList = document.getElementById("taskList");
+    const addTaskBtn = document.getElementById("addTask");
+    const menuButtons = document.querySelectorAll(".menu-btn");
+
+    addTaskBtn.addEventListener("click", addTask);
+    taskInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") addTask();
+    });
+
+    menuButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelector(".menu-btn.active").classList.remove("active");
+        btn.classList.add("active");
+        currentMenu = btn.dataset.menu;
+        renderTasks();
+      });
+    });
+
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (text !== "") {
+        tasks.push({ text, completed: false, trashed: false });
+        taskInput.value = "";
+        renderTasks();
+      }
+    }
+
+    function toggleComplete(index) {
+      tasks[index].completed = !tasks[index].completed;
+      renderTasks();
+    }
+
+    function deleteTask(index) {
+      tasks[index].trashed = true;
+      renderTasks();
+    }
+
+    function restoreTask(index) {
+      tasks[index].trashed = false;
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      tasks.forEach((task, index) => {
+        if (currentMenu === "all" ||
+            (currentMenu === "active" && !task.completed && !task.trashed) ||
+            (currentMenu === "completed" && task.completed && !task.trashed) ||
+            (currentMenu === "trash" && task.trashed)) {
+          
+          const li = document.createElement("li");
+          li.className = task.completed ? "completed" : "";
+          if (task.trashed) li.classList.add("trashed");
+
+          li.innerHTML = `
+            <span>${task.text}</span>
+            <div class="task-btns">
+              ${!task.trashed ? `
+                <button onclick="toggleComplete(${index})">${task.completed ? '↩' : '✅'}</button>
+                <button onclick="deleteTask(${index})">🗑</button>
+              ` : `
+                <button onclick="restoreTask(${index})">♻</button>
+              `}
+            </div>
+          `;
+          taskList.appendChild(li);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
